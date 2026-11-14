@@ -1,0 +1,185 @@
+<div class="app-shell">
+  <aside class="sidebar">
+    <a class="brand" href="#invoices" (click)="selectSection('invoices')" aria-label="Billing Desk home">
+      <span class="brand-mark">B</span>
+      <span>Billing<span class="brand-light">Desk</span></span>
+    </a>
+
+    <p class="nav-label">Workspace</p>
+    <nav aria-label="Main navigation">
+      <button type="button" [class.active]="section === 'invoices'" (click)="selectSection('invoices')">
+        <span class="nav-icon">▤</span> Invoices
+      </button>
+      <button type="button" [class.active]="section === 'customers'" (click)="selectSection('customers')">
+        <span class="nav-icon">♙</span> Customers
+      </button>
+      <button type="button" [class.active]="section === 'products'" (click)="selectSection('products')">
+        <span class="nav-icon">▦</span> Products
+      </button>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <span class="status-dot"></span>
+      <span>Connected through gateway</span>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">BILLING WORKSPACE</p>
+        <h1>{{ section === 'invoices' ? 'Invoices' : section === 'customers' ? 'Customers' : 'Products' }}</h1>
+      </div>
+      <div class="topbar-note"><span class="status-dot"></span> Microservices online</div>
+    </header>
+
+    @if (errorMessage) {
+      <div class="notice error" role="alert">{{ errorMessage }}</div>
+    }
+    @if (successMessage) {
+      <div class="notice success" role="status">{{ successMessage }}</div>
+    }
+
+    @if (section === 'invoices') {
+      <section class="page-grid">
+        <div class="panel invoice-list">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">RECORDS</p>
+              <h2>All invoices <span class="count">{{ bills.length }}</span></h2>
+            </div>
+            <span class="muted">Latest first</span>
+          </div>
+
+          @if (bills.length === 0) {
+            <div class="empty-state">
+              <span class="empty-icon">▤</span>
+              <h3>No invoices yet</h3>
+              <p>Create an invoice using the form on this page.</p>
+            </div>
+          } @else {
+            <div class="invoice-stack">
+              @for (bill of bills; track bill.id) {
+                <article class="invoice-card">
+                  <div class="invoice-card-top">
+                    <div class="invoice-id"><span class="invoice-icon">↗</span> INV-{{ bill.id }}</div>
+                    <span class="date">{{ bill.billingDate | date:'mediumDate' }}</span>
+                  </div>
+                  <div class="invoice-customer">
+                    <span class="avatar">{{ (bill.customer.name || '?').slice(0, 1) }}</span>
+                    <div><strong>{{ bill.customer.name }}</strong><small>{{ bill.customer.email }}</small></div>
+                    <strong class="amount">{{ billTotal(bill) | currency }}</strong>
+                  </div>
+                  <div class="item-list">
+                    @for (item of bill.items; track item.id) {
+                      <div class="invoice-item">
+                        <span>{{ item.productName }} <small>× {{ item.quantity }}</small></span>
+                        <span>{{ item.unitPrice * item.quantity | currency }}</span>
+                      </div>
+                    }
+                  </div>
+                </article>
+              }
+            </div>
+          }
+        </div>
+
+        <section class="panel create-panel">
+          <div class="panel-heading">
+            <div><p class="eyebrow">NEW RECORD</p><h2>Create invoice</h2></div>
+            <span class="plus-mark">+</span>
+          </div>
+          <form (ngSubmit)="createBill()">
+            <label for="bill-customer">Customer</label>
+            <select id="bill-customer" name="billCustomerId" [(ngModel)]="billCustomerId" required>
+              <option [ngValue]="0" disabled>Select a customer</option>
+              @for (customer of customers; track customer.id) {
+                <option [ngValue]="customer.id">{{ customer.name }}</option>
+              }
+            </select>
+
+            <div class="form-divider"></div>
+            <label for="bill-product">Add products</label>
+            <div class="item-controls">
+              <select id="bill-product" name="billProductId" [(ngModel)]="billProductId">
+                @for (product of products; track product.id) {
+                  <option [ngValue]="product.id">{{ product.name }} · {{ product.price | currency }}</option>
+                }
+              </select>
+              <input aria-label="Quantity" name="billItemQuantity" type="number" min="1" [(ngModel)]="billItemQuantity">
+              <button class="icon-button" type="button" (click)="addBillItem()" [disabled]="!products.length" aria-label="Add product">+</button>
+            </div>
+
+            @if (draftItems.length) {
+              <div class="draft-list">
+                @for (item of draftItems; track $index; let i = $index) {
+                  <div class="draft-row">
+                    <span>{{ item.productName }} <small>× {{ item.quantity }}</small></span>
+                    <span>{{ item.unitPrice * item.quantity | currency }} <button type="button" class="remove-button" (click)="removeBillItem(i)" aria-label="Remove item">×</button></span>
+                  </div>
+                }
+              </div>
+              <div class="draft-total"><span>Total</span><strong>{{ draftTotal() | currency }}</strong></div>
+            } @else {
+              <p class="helper-text">Choose a product and quantity, then add it to the invoice.</p>
+            }
+
+            <button class="primary-button" type="submit" [disabled]="!billCustomerId || !draftItems.length">
+              Create invoice <span>→</span>
+            </button>
+          </form>
+          <p class="form-footnote">Customer and product details are fetched from their services.</p>
+        </section>
+      </section>
+    }
+
+    @if (section === 'customers') {
+      <section class="page-grid directory-grid">
+        <div class="panel directory-panel">
+          <div class="panel-heading"><div><p class="eyebrow">CUSTOMER SERVICE</p><h2>Customer directory <span class="count">{{ customers.length }}</span></h2></div></div>
+          @if (customers.length === 0) {
+            <div class="empty-state"><span class="empty-icon">♙</span><h3>No customers found</h3><p>Add the first customer with the form.</p></div>
+          } @else {
+            <div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Customer ID</th></tr></thead>
+              <tbody>@for (customer of customers; track customer.id) {
+                <tr><td><span class="avatar table-avatar">{{ customer.name.slice(0, 1) }}</span><strong>{{ customer.name }}</strong></td><td>{{ customer.email }}</td><td class="muted">#{{ customer.id }}</td></tr>
+              }</tbody>
+            </table></div>
+          }
+        </div>
+        <section class="panel create-panel"><div class="panel-heading"><div><p class="eyebrow">NEW RECORD</p><h2>Add customer</h2></div><span class="plus-mark">+</span></div>
+          <form (ngSubmit)="createCustomer()">
+            <label for="customer-name">Full name</label><input id="customer-name" name="customerName" [(ngModel)]="customerName" required placeholder="e.g. Alex Morgan">
+            <label for="customer-email">Email address</label><input id="customer-email" name="customerEmail" type="email" [(ngModel)]="customerEmail" required placeholder="alex@example.com">
+            <button class="primary-button" type="submit">Save customer <span>→</span></button>
+          </form>
+        </section>
+      </section>
+    }
+
+    @if (section === 'products') {
+      <section class="page-grid directory-grid">
+        <div class="panel directory-panel">
+          <div class="panel-heading"><div><p class="eyebrow">INVENTORY SERVICE</p><h2>Product catalog <span class="count">{{ products.length }}</span></h2></div></div>
+          @if (products.length === 0) {
+            <div class="empty-state"><span class="empty-icon">▦</span><h3>No products found</h3><p>Add the first product with the form.</p></div>
+          } @else {
+            <div class="table-wrap"><table><thead><tr><th>Product</th><th>Price</th><th>In stock</th></tr></thead>
+              <tbody>@for (product of products; track product.id) {
+                <tr><td><span class="product-mark">▦</span><strong>{{ product.name }}</strong></td><td>{{ product.price | currency }}</td><td><span class="stock-pill">{{ product.quantity }} units</span></td></tr>
+              }</tbody>
+            </table></div>
+          }
+        </div>
+        <section class="panel create-panel"><div class="panel-heading"><div><p class="eyebrow">NEW RECORD</p><h2>Add product</h2></div><span class="plus-mark">+</span></div>
+          <form (ngSubmit)="createProduct()">
+            <label for="product-name">Product name</label><input id="product-name" name="productName" [(ngModel)]="productName" required placeholder="e.g. Wireless keyboard">
+            <div class="form-row"><div><label for="product-price">Price</label><input id="product-price" name="productPrice" type="number" min="0" step="0.01" [(ngModel)]="productPrice" required></div>
+              <div><label for="product-quantity">Quantity</label><input id="product-quantity" name="productQuantity" type="number" min="0" [(ngModel)]="productQuantity" required></div></div>
+            <button class="primary-button" type="submit">Save product <span>→</span></button>
+          </form>
+        </section>
+      </section>
+    }
+  </main>
+</div>
