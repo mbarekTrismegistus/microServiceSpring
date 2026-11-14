@@ -7,3 +7,6 @@ dist/
 *.mv.db
 *.trace.db
 
+instruction.txt
+/[[]French (auto-generated)] *.txt
+
