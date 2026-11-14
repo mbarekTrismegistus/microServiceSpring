@@ -2,6 +2,7 @@ package com.example.customer;
 
 import com.example.customer.application.CustomerUseCases;
 import com.example.customer.domain.Customer;
+import com.example.customer.domain.CustomerRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -11,6 +12,11 @@ import org.springframework.context.annotation.Bean;
 public class CustomerServiceApplication {
     public static void main(String[] args) {
         SpringApplication.run(CustomerServiceApplication.class, args);
+    }
+
+    @Bean
+    CustomerUseCases customerUseCases(CustomerRepository customers) {
+        return new CustomerUseCases(customers);
     }
 
     @Bean

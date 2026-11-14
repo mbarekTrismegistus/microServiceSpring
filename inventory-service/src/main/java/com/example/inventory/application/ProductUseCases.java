@@ -2,12 +2,10 @@ package com.example.inventory.application;
 
 import com.example.inventory.domain.Product;
 import com.example.inventory.domain.ProductRepository;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
-@Service
 public class ProductUseCases {
     private final ProductRepository products;
 

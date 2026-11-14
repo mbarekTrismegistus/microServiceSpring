@@ -3,13 +3,11 @@ package com.example.billing.application;
 import com.example.billing.domain.Bill;
 import com.example.billing.domain.BillItem;
 import com.example.billing.domain.BillRepository;
-import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-@Service
 public class BillUseCases {
     private final BillRepository bills;
     private final CustomerLookup customers;

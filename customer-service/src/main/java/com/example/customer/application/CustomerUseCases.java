@@ -2,12 +2,10 @@ package com.example.customer.application;
 
 import com.example.customer.domain.Customer;
 import com.example.customer.domain.CustomerRepository;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
-@Service
 public class CustomerUseCases {
     private final CustomerRepository customers;
 
