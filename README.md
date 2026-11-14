@@ -14,6 +14,28 @@ Spring Boot microservices for managing customers, products, and invoices, with E
 | billing-service | 803 | Invoices and Feign lookups |
 | Angular client | 4200 | Customer, product, and invoice screens |
 
+```mermaid
+flowchart LR
+    UI[Angular client :4200] -->|HTTP| GW[Gateway :8888]
+    GW -->|service lookup| EU[Eureka :8761]
+    GW -->|/customers| C[Customer :801]
+    GW -->|/products| I[Inventory :802]
+    GW -->|/bills| B[Billing :803]
+    C --> EU
+    I --> EU
+    B --> EU
+    B -->|OpenFeign| C
+    B -->|OpenFeign| I
+    C --> CDB[(Customer H2)]
+    I --> IDB[(Inventory H2)]
+    B --> BDB[(Billing H2)]
+    C --> CFG[Config Server :9999]
+    I --> CFG
+    B --> CFG
+    GW --> CFG
+    CFG --> REPO[(Git config-repo)]
+```
+
 ## Run
 
 Use Java 17 or newer and Maven. Start each Spring Boot service in a separate terminal, in this order: `discovery-service`, `config-service`, `customer-service`, `inventory-service`, `billing-service`, and `gateway-service`. Run commands below from the project root:
@@ -30,6 +52,10 @@ mvn -pl gateway-service spring-boot:run
 The config server reads the committed `config-repo/` directory from this project’s Git repository. Service-specific settings are in `<service-name>.yml`; common Eureka settings are in `application.yml`. The Eureka dashboard is at `http://localhost:8761`, and the customer configuration endpoint is `http://localhost:9999/customer-service/dev`.
 
 Business services use the `dev` profile by default. For production settings, set `SPRING_PROFILES_ACTIVE=prod` when starting a service; profile-specific values are in `config-repo/*-dev.yml` and `config-repo/*-prod.yml`.
+
+```sh
+SPRING_PROFILES_ACTIVE=prod mvn -pl customer-service spring-boot:run
+```
 
 Build the Java services with `mvn -DskipTests package`. Start the Angular client from `angular-client` with `npm install` followed by `npm start`. It runs at `http://localhost:4200` and sends requests through `http://localhost:8888`.
 
