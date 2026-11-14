@@ -27,7 +27,9 @@ mvn -pl billing-service spring-boot:run
 mvn -pl gateway-service spring-boot:run
 ```
 
-The config server reads the committed `config-repo/` directory from this project’s Git repository. Service-specific settings are in `<service-name>.yml`; common Eureka settings are in `application.yml`. The Eureka dashboard is at `http://localhost:8761`, and the config endpoint for a service is `http://localhost:9999/<service-name>/default`.
+The config server reads the committed `config-repo/` directory from this project’s Git repository. Service-specific settings are in `<service-name>.yml`; common Eureka settings are in `application.yml`. The Eureka dashboard is at `http://localhost:8761`, and the customer configuration endpoint is `http://localhost:9999/customer-service/dev`.
+
+Business services use the `dev` profile by default. For production settings, set `SPRING_PROFILES_ACTIVE=prod` when starting a service; profile-specific values are in `config-repo/*-dev.yml` and `config-repo/*-prod.yml`.
 
 Build the Java services with `mvn -DskipTests package`. Start the Angular client from `angular-client` with `npm install` followed by `npm start`. It runs at `http://localhost:4200` and sends requests through `http://localhost:8888`.
 
